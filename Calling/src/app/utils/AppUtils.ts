@@ -4,6 +4,7 @@
 import { GroupLocator, TeamsMeetingLinkLocator } from '@azure/communication-calling';
 import { ParticipantRole, RoomCallLocator } from '@azure/communication-calling';
 import { TeamsMeetingIdLocator } from '@azure/communication-calling';
+import { fromFlatCommunicationIdentifier, StartCallIdentifier } from '@azure/communication-react';
 import { v1 as generateGUID } from 'uuid';
 
 /**
@@ -11,9 +12,9 @@ import { v1 as generateGUID } from 'uuid';
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const fetchTokenResponse = async (): Promise<any> => {
-  const response = await fetch('/token?scope=voip');
+  const response = await fetch('token?scope=voip');
   if (response.ok) {
-    const responseAsJson = await response.json(); //(await response.json())?.value?.token;
+    const responseAsJson = await response.json();
     const token = responseAsJson.token;
     if (token) {
       return responseAsJson;
@@ -46,7 +47,7 @@ export const createRoom = async (): Promise<string> => {
   const requestOptions = {
     method: 'POST'
   };
-  const response = await fetch(`/createRoom`, requestOptions);
+  const response = await fetch(`createRoom`, requestOptions);
   if (!response.ok) {
     throw 'Unable to create room';
   }
@@ -66,7 +67,7 @@ export const addUserToRoom = async (userId: string, roomId: string, role: Partic
     },
     body: JSON.stringify({ userId: userId, roomId: roomId, role: role })
   };
-  const response = await fetch('/addUserToRoom', requestOptions);
+  const response = await fetch('addUserToRoom', requestOptions);
   if (!response.ok) {
     throw 'Unable to add user to room';
   }
@@ -108,6 +109,17 @@ export const getRoomIdFromUrl = (): RoomCallLocator | undefined => {
   return roomId ? { roomId } : undefined;
 };
 
+export const getOutboundParticipants = (outboundParticipants?: string[]): StartCallIdentifier[] | undefined => {
+  if (outboundParticipants && outboundParticipants.length > 0) {
+    const participants: StartCallIdentifier[] = outboundParticipants.map((participantId) => {
+      return fromFlatCommunicationIdentifier(participantId);
+    });
+    // set call participants and do not update the window URL since there is not a joinable link
+    return participants;
+  }
+  return undefined;
+};
+
 /*
  * TODO:
  *  Remove this method once the SDK improves error handling for unsupported browser.
@@ -122,7 +134,7 @@ export const isOnIphoneAndNotSafari = (): boolean => {
 export const isLandscape = (): boolean => window.innerWidth < window.innerHeight;
 
 export const navigateToHomePage = (): void => {
-  window.location.href = window.location.href.split('?')[0];
+  window.location.href = window.location.href.split('?')[0] ?? window.location.href;
 };
 
 export const WEB_APP_TITLE = document.title;
